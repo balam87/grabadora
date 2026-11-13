@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1712">
+<title>Grabadora · Plátano canario</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#0f1712;color:#f3f1e8;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px;font-size:18px}
+.top b{color:#e8c547;font-size:24px}
+.prog{height:8px;background:#2a3a2f;margin:0 18px;border-radius:4px;overflow:hidden}.prog i{display:block;height:100%;background:#46a758;width:0;transition:width .3s}
+.scene{padding:12px 18px 0;color:#9fb3a5;font-size:16px;line-height:1.35}
+#txt{flex:1;padding:14px 18px;font-size:clamp(28px,7.4vw,54px);line-height:1.32;font-weight:650}
+#txt.rec{color:#fff}
+.bar{position:sticky;bottom:0;padding:12px 18px 18px;background:linear-gradient(transparent,#0f1712 18%);display:flex;flex-direction:column;gap:12px}
+#rec{width:100%;border:0;border-radius:20px;padding:22px;font:inherit;font-size:26px;font-weight:800;background:#e5484d;color:#fff}
+#rec.on{background:#fff;color:#e5484d;animation:p 1s infinite}@keyframes p{50%{opacity:.75}}
+.row{display:flex;gap:10px}.row button{flex:1;border:0;border-radius:16px;padding:16px;font:inherit;font-size:19px;font-weight:700;background:#2a3a2f;color:#f3f1e8}
+.row button:disabled{opacity:.35}
+#timer{font-variant-numeric:tabular-nums;font-size:20px;color:#9fb3a5;text-align:center}
+.ok{color:#46a758}
+.screen{display:none;flex:1;flex-direction:column;justify-content:center;padding:24px;gap:18px;font-size:21px;line-height:1.45}
+.screen h1{font-size:30px;margin:0}
+.big{border:0;border-radius:20px;padding:22px;font:inherit;font-size:24px;font-weight:800;width:100%}
+.green{background:#25d366;color:#08210f}.yellow{background:#e8c547;color:#1b1b0f}.gray{background:#2a3a2f;color:#f3f1e8}
+.err{color:#ff8a8f;font-size:17px}
+</style></head><body>
+<!-- inicio -->
+<div class="screen" id="s0" style="display:flex">
+  <h1>🎙️ Grabadora del guion</h1>
+  <div>Eres el <b>muñeco de Minecraft</b>: habla con energía, como presentador.</div>
+  <div>1. Toca <b>Empezar</b> y da <b>Permitir</b> al micrófono.<br>2. Lee la frase y toca <b>⏺ Grabar</b>. Cuando termines, toca <b>⏹ Listo</b>.<br>3. Al final toca <b>Enviar todo por WhatsApp</b>: se manda <b>un solo archivo</b> con todo.<br>Si se cierra la página, lo grabado no se pierde.</div>
+  <button class="big yellow" id="start">Empezar</button>
+  <div class="err" id="err0"></div>
+</div>
+<!-- grabando -->
+<div id="s1" style="display:none;flex:1;flex-direction:column">
+  <div class="top"><span>Frase <b id="n">1</b> de <span id="t"></span></span><span id="done"></span></div>
+  <div class="prog"><i id="bar"></i></div>
+  <div class="scene">🎬 <span id="scene"></span> · <i id="tone"></i></div>
+  <div id="txt"></div>
+  <div class="bar">
+    <div id="timer">Toca Grabar cuando estés listo</div>
+    <button id="rec">⏺ Grabar</button>
+    <div class="row"><button id="prev">◀ Atrás</button><button id="play" disabled>▶ Escuchar</button><button id="next">Siguiente ▶</button></div>
+  </div>
+</div>
+<!-- final -->
+<div class="screen" id="s2">
+  <h1>🎉 ¡Listo!</h1>
+  <div id="sum"></div>
+  <button class="big green" id="share">📲 Enviar TODO en un solo archivo</button>
+  <button class="big gray" id="dl">⬇️ Guardar en el celular</button>
+  <button class="big gray" id="back">Revisar frases</button>
+  <div class="err" id="err2"></div>
+</div>
+<script>
+const L=[["¡Hola! Soy de Minecraft. Aquí, si talo un árbol… salen bloques de madera.", "Alegre, como presentador", "Minecraft: tu personaje frente a un árbol, con hacha"], ["Pero hoy voy a abrir un portal a su mundo, el real, para mostrarles algo que en mi juego no existe.", "Misterioso", "Minecraft: talas el árbol y caen los bloques; luego enciendes un portal"], ["Miren: acaban de sacar un platanero. ¿Notan algo curioso? ¡No tiene tronco!", "Sorprendido", "Mundo real: sacando el platanero"], ["En los árboles, el tronco es madera: cada año se forma un anillo nuevo, fabricado por una capa llamada cambium.", "Explicativo", "Nube: tronco de árbol con sus anillos"], ["El platanero no tiene cambium. Su “tronco” es un pseudotallo: hojas enrolladas una sobre otra, con 92 a 95% de agua.", "Revelación", "Nube: corte del platanero, hojas enrolladas"], ["Al microscopio se ven células llenas de agua y cámaras de aire. Por eso, si lo taláramos, no sacaríamos madera.", "Asombrado", "Nube microscópica: células con agua y cámaras de aire"], ["En pocas palabras: el platanero no es un árbol. ¡Es una hierba gigante!", "Firme, con gracia", "Minecraft: tu personaje"], ["Su tallo verdadero está bajo tierra: el cormo. De ahí nacen las hojas, cientos de raíces… y los hijuelos.", "Explicativo", "Nube: la raíz y el cormo bajo tierra"], ["Para trasplantar se escoge un hijo de espada: base ancha y hojas angostas. El hijo de agua, de hojas anchas, da plantas débiles.", "Consejo práctico", "Nube: hijo de espada contra hijo de agua"], ["Aquí ya lo trasplantaron. ¡Estaba bien pesado, pero se logró acomodar!", "Satisfecho", "Mundo real: ya trasplantado"], ["Y todo esto se hizo para que pase mejor la carretilla.", "Casual", "Mundo real: el camino"], ["Pero espérense, que aquí viene lo bueno: ¿qué tiene que ver el plátano con los animales?", "Intriga, más energía", "Minecraft: tu personaje abre otro portal"], ["Estos conejos se comen la hoja con gusto. Tiene de 10 a 17% de proteína, y se ha usado hasta en 40% de su dieta.", "Cálido", "Mundo real: los conejos comiendo hoja"], ["El conejo tiene un truco: su ciego fermenta la fibra con bacterias, y luego se come unas heces blandas, los cecotrofos, llenas de proteína y vitaminas B.", "Curioso, dato raro", "Nube: digestión del conejo (ciego)"], ["Por eso la hoja le sirve, pero como complemento: es sobre todo fibra, y necesita otra fuente de proteína.", "Consejo", "Mundo real: conejo angora"], ["Las vacas, borregos y cabras tienen rumen: un tanque de fermentación donde miles de millones de microbios rompen la celulosa del pseudotallo.", "Impresionado", "Nube: el rumen por dentro, con microbios"], ["Si se le agrega urea, los microbios la convierten en amoniaco y luego en su propia proteína. La melaza les da la energía para lograrlo.", "Técnico, claro", "Nube: urea, amoniaco y proteína"], ["La gallina no puede fermentar tanta fibra: su buche y su molleja ablandan y muelen, pero no digieren la celulosa. Por eso el pseudotallo a ella le da sobre todo agua.", "Explicativo", "Nube: gallina, buche y molleja"], ["Y la hoja seca, que parece basura, también sirve: es refugio para las ranas…", "Sorpresa", "Mundo real: hoja seca y ranita"], ["…y en el agua suelta taninos, que la tiñen color té y la vuelven un poco más ácida, como los ríos de agua negra de la Amazonía.", "Curioso", "Nube: hoja seca soltando taninos en el agua"], ["En un estudio de 2025, con poco más de un gramo de hoja por litro, sobrevivió el 95% de las crías de pez betta. Sin hoja… no sobrevivió ninguna.", "Dato impactante, pausa al final", "Nube: crías de pez betta"], ["¿Y el fruto? El plátano canario es corto, gordito y no tiene semillas: cada hijuelo es un clon de su mamá.", "Dato curioso", "Mundo real: el racimo"], ["Así quedaron. ¿Verdad que se ven bien?", "Orgulloso", "Mundo real: así quedaron"], ["Del fruto a la hoja, todo se aprovecha. Yo me regreso a mi mundo… ¡síguenos para más Producción Animal!", "Despedida, con sonrisa", "Minecraft: tu personaje cruza el portal de regreso"]];
+const $=id=>document.getElementById(id);
+const recs=new Array(L.length).fill(null);
+let i=0,stream=null,mr=null,chunks=[],t0=0,tick=null,mime='',audio=new Audio();
+function pick(){for(const m of['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'])if(window.MediaRecorder&&MediaRecorder.isTypeSupported(m))return m;return''}
+function ext(){return mime.includes('mp4')?'m4a':mime.includes('ogg')?'ogg':'weba'}
+function show(id){['s0','s1','s2'].forEach(s=>$(s).style.display=s===id?'flex':'none')}
+function render(){const l=L[i];$('n').textContent=i+1;$('t').textContent=L.length;$('txt').textContent=l[0];$('tone').textContent=l[1];$('scene').textContent=l[2];
+  const d=recs.filter(Boolean).length;$('done').innerHTML=`<span class="ok">✔ ${d}</span>`;$('bar').style.width=(d/L.length*100)+'%';
+  $('play').disabled=!recs[i];$('timer').textContent=recs[i]?`✔ Grabada (${recs[i].dur.toFixed(1)} s) · puedes repetirla`:'Toca Grabar cuando estés listo';$('prev').disabled=i===0;window.scrollTo(0,0)}
+$('start').onclick=async()=>{try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:true,autoGainControl:true}});mime=pick();show('s1');render()}
+  catch(e){$('err0').textContent='No se pudo usar el micrófono ('+e.name+'). Toca el candado de arriba → Permisos → Micrófono → Permitir, y vuelve a intentar.'}};
+$('rec').onclick=()=>{if(mr&&mr.state==='recording'){stop();return}
+  audio.pause();chunks=[];mr=new MediaRecorder(stream,mime?{mimeType:mime}:{});mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  mr.onstop=()=>{const blob=new Blob(chunks,{type:mr.mimeType||mime});recs[i]={blob,dur:(performance.now()-t0)/1000};save(i);clearInterval(tick);$('rec').classList.remove('on');$('rec').textContent='⏺ Grabar';$('txt').classList.remove('rec');
+    if(i<L.length-1){i++;render()}else{finish()}};
+  mr.start();t0=performance.now();$('rec').classList.add('on');$('rec').textContent='⏹ Listo';$('txt').classList.add('rec');
+  tick=setInterval(()=>$('timer').textContent='🔴 Grabando… '+((performance.now()-t0)/1000).toFixed(1)+' s',100)};
+function stop(){if(mr&&mr.state==='recording')mr.stop()}
+$('play').onclick=()=>{if(!recs[i])return;audio.src=URL.createObjectURL(recs[i].blob);audio.play()};
+$('prev').onclick=()=>{stop();if(i>0){i--;render()}};
+$('next').onclick=()=>{stop();if(i<L.length-1){i++;render()}else finish()};
+// ---- guardar automático (IndexedDB) ----
+let db=null;try{const rq=indexedDB.open('grab_platano',1);rq.onupgradeneeded=()=>rq.result.createObjectStore('r');rq.onsuccess=()=>{db=rq.result;const tx=db.transaction('r').objectStore('r').getAll();tx.onsuccess=()=>{(tx.result||[]).forEach(o=>{if(o&&o.k<L.length)recs[o.k]={blob:o.blob,dur:o.dur}});if($('s1').style.display==='flex')render()}}}catch(e){}
+function save(k){try{if(db&&recs[k])db.transaction('r','readwrite').objectStore('r').put({k,blob:recs[k].blob,dur:recs[k].dur},k)}catch(e){}}
+// ---- unir todo en UN solo archivo WAV (pitido entre frases) ----
+async function combined(){const SR=24000;const ac=new (window.AudioContext||window.webkitAudioContext)();const parts=[];
+  for(let k=0;k<L.length;k++){if(!recs[k])continue;const buf=await ac.decodeAudioData(await recs[k].blob.arrayBuffer());
+    const n=Math.round(buf.duration*SR);const ch=buf.getChannelData(0);const out=new Float32Array(n);for(let j=0;j<n;j++)out[j]=ch[Math.min(ch.length-1,Math.floor(j*buf.sampleRate/SR))];
+    parts.push({k,data:out})}
+  const sil=n=>new Float32Array(Math.round(n*SR));
+  const beep=k=>{const c=k+1,seg=[];for(let b=0;b<1;b++){const a=new Float32Array(Math.round(0.35*SR));for(let j=0;j<a.length;j++)a[j]=0.4*Math.sin(2*Math.PI*1000*j/SR);seg.push(a)}return seg};
+  const seq=[];parts.forEach(p=>{seq.push(sil(0.6),...beep(p.k),sil(0.6),p.data)});seq.push(sil(0.8));
+  const total=seq.reduce((a,b)=>a+b.length,0);const buf=new ArrayBuffer(44+total*2),v=new DataView(buf);
+  const w=(o,s)=>{for(let j=0;j<s.length;j++)v.setUint8(o+j,s.charCodeAt(j))};w(0,'RIFF');v.setUint32(4,36+total*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,SR,true);v.setUint32(28,SR*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,total*2,true);
+  let o=44;seq.forEach(a=>{for(let j=0;j<a.length;j++){v.setInt16(o,Math.max(-1,Math.min(1,a[j]))*32767,true);o+=2}});
+  const got=parts.map(p=>p.k+1).join('-');return new File([buf],'guion_platano_jefe.wav',{type:'audio/wav'})}
+function finish(){const d=recs.filter(Boolean).length;const miss=recs.map((r,k)=>r?null:k+1).filter(Boolean);
+  $('sum').innerHTML=`Grabaste <b>${d} de ${L.length}</b> frases.`+(miss.length?`<br><span class="err">Faltan: ${miss.join(', ')}</span>`:'');show('s2')}
+$('back').onclick=()=>{i=recs.findIndex(r=>!r);if(i<0)i=0;show('s1');render()};
+$('share').onclick=async()=>{$('err2').textContent='Preparando el archivo…';let f;try{f=await combined()}catch(e){$('err2').textContent='Error al unir: '+e.message;return}
+  $('err2').textContent='';try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Guion plátano',text:'Audio completo del guion'})}else throw new Error('x')}
+  catch(e){if(e.name==='AbortError')return;$('err2').textContent='Tu celular no dejó compartir. Usa “Guardar en el celular” y mándalo por WhatsApp → 📎 → Documento.'}};
+$('dl').onclick=async()=>{const f=await combined();const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove()};
+</script></body></html>
